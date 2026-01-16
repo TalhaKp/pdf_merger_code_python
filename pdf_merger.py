@@ -1,9 +1,10 @@
 import os
 import sys
+import re
 
 # Kütüphane kontrolü
 try:
-    # PdfMerger yerine PdfWriter ve PdfReader kullanıyoruz. Çünkü uzun denemelerime rağmen başaramadım.
+    # PdfMerger yerine PdfWriter ve PdfReader kullanıyoruz. Çünkü uzun denemelerime rağmen pdfmergeri çalıştıramadım.
     from pypdf import PdfWriter, PdfReader
 except ImportError:
     print("HATA: pypdf kütüphanesi eksik. Terminale 'python -m pip install pypdf' yaz.")
@@ -11,10 +12,15 @@ except ImportError:
 
 # ---------------- AYARLAR ----------------
 # Buraya pdf'lerin bulunduğu klasörün pathini yazın.
-KLASOR_YOLU = r"KLASOR YOLUNU GIRIN"
+KLASOR_YOLU = r"C:\Users\ztalh\OneDrive\Desktop\Bilgisayar\pdf_birlestirici_klasör"
 
 # Çıktı dosyasının adı, istediğiniz şekilde güncelleyebilirsiniz.
 CIKTI_ISMI = "Birlestirilmis_Dosya.pdf"
+
+def natural_sort(dosya_adi):
+    return tuple(
+        int(c) if c.isdecimal() else c.lower().strip()  #Okunulabilirlik açısından tuple'ı böyle yazdım.  (isdecimal() ile isdigit()'te okunan ama konumuzla alakasız olan unicodelardan kurtulucaz.)
+        for c in re.split(r'(\d+)', dosya_adi)) #Bu yenilik sayesinde 2 < 10 gibi alfabetik digit sıralama sorunu yaşamayacağız. (küçükten büyüğe sıralıyoruz ama 10 2 den önce geliyordu önceden.)
 
 def pdf_birlestir():
     # 1. Klasör Kontrolü
@@ -25,7 +31,6 @@ def pdf_birlestir():
     # 2. PDF Dosyalarını Listeleme
     tum_dosyalar = os.listdir(KLASOR_YOLU)
     pdf_dosyalari = [f for f in tum_dosyalar if f.lower().endswith('.pdf')]
-    pdf_dosyalari.sort() #pdflerin sıralanabilir olması durumuna dikkat edin.
 
     # Çıktı dosyası zaten varsa listeye alma
     if CIKTI_ISMI in pdf_dosyalari:
@@ -34,6 +39,9 @@ def pdf_birlestir():
     if not pdf_dosyalari:
         print("⚠️  Bu klasörde hiç PDF dosyası yok!")
         return
+
+    pdf_dosyalari.sort(key=natural_sort) #pdflerin sıralanabilir olması durumuna dikkat edin.
+
 
     # 3. Yazma İşlemi (Writer Kullanarak)
     writer = PdfWriter()
